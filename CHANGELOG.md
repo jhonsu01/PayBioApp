@@ -15,4 +15,4 @@ y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Fast-Share** de QR + datos y **widget** de pantalla de inicio.
 - Pipeline de **GitHub Actions**: CI en cada push y publicación automática del APK en Releases por tag `v*`.
 
-[1.0.0]: https://github.com/USER/REPO/releases/tag/v1.0.0
+[1.0.0]: ../../releases/tag/v1.0.0

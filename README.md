@@ -4,9 +4,9 @@
 
 **Tarjetero virtual de cobros para Android. 100% local, centrado en la privacidad y potenciado por IA en el dispositivo.**
 
-[![Android CI](https://github.com/USER/REPO/actions/workflows/android-ci.yml/badge.svg)](../../actions/workflows/android-ci.yml)
-[![Release APK](https://github.com/USER/REPO/actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
-[![Latest release](https://img.shields.io/github/v/release/USER/REPO?label=APK)](../../releases/latest)
+[![Android CI](../../actions/workflows/android-ci.yml/badge.svg)](../../actions/workflows/android-ci.yml)
+[![Release APK](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
+[![Descargar APK](https://img.shields.io/badge/APK-Releases-00E676.svg)](../../releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-00E676.svg)](LICENSE)
 
 </div>
