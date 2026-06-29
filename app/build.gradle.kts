@@ -7,7 +7,7 @@ plugins {
 
 // Versioning driven by SemVer git tags via -PappVersionName / -PappVersionCode (CI).
 // Falls back to sane defaults for local builds.
-val appVersionName: String = (project.findProperty("appVersionName") as String?) ?: "1.0.0"
+val appVersionName: String = (project.findProperty("appVersionName") as String?) ?: "1.1.0"
 val appVersionCode: Int = ((project.findProperty("appVersionCode") as String?) ?: "1").toInt()
 
 android {
@@ -41,8 +41,8 @@ android {
             versionNameSuffix = "-debug"
         }
         getByName("release") {
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true          // R8: shrink + obfuscate DEX (v1.1.0)
+            isShrinkResources = false       // keep off: gains are minimal (weight is native libs/model) and avoids resource-strip risk
             signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
