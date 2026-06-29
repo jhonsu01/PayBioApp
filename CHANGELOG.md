@@ -3,6 +3,18 @@
 Todas las versiones notables de PayBio. El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.4.0] - 2026-06-29
+
+### Añadido
+- **Explorador de archivos integrado** (inspirado en Fossify File Manager) para importar el respaldo `.zip` en dispositivos sin selector del sistema (p. ej. algunas Android TV). Al importar se elige "Selector del sistema" o "Explorador integrado".
+
+### Cambiado
+- **Modo Kiosco en pantallas grandes / TV:** ahora **todos** los medios de pago se ajustan y se muestran a la vez en una grilla que se ordena sola según la cantidad (antes solo se veían 2). El tamaño del QR se escala para que quepan sin desplazamiento.
+- **Selección de País/Plataforma navegable con control remoto:** los desplegables se reemplazaron por un selector en diálogo con lista enfocable (antes requería mouse en TV).
+
+### Permisos
+- Se añade acceso a almacenamiento **opcional** (READ_EXTERNAL_STORAGE en API ≤29; acceso a todos los archivos en API ≥30), usado **solo** si abres el explorador integrado. La app sigue **sin permiso de Internet**.
+
 ## [1.3.0] - 2026-06-29
 
 ### Añadido
@@ -51,6 +63,7 @@ y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Fast-Share** de QR + datos y **widget** de pantalla de inicio.
 - Pipeline de **GitHub Actions**: CI en cada push y publicación automática del APK en Releases por tag `v*`.
 
+[1.4.0]: ../../releases/tag/v1.4.0
 [1.3.0]: ../../releases/tag/v1.3.0
 [1.2.0]: ../../releases/tag/v1.2.0
 [1.1.0]: ../../releases/tag/v1.1.0

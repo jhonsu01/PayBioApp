@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -42,6 +43,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -71,6 +74,8 @@ fun SettingsScreen(
     var importing by remember { mutableStateOf(false) }
     var showRestart by remember { mutableStateOf(false) }
     var showExportPinChoice by remember { mutableStateOf(false) }
+    var showImportChoice by remember { mutableStateOf(false) }
+    var showBrowser by remember { mutableStateOf(false) }
 
     val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) pendingImport = uri
@@ -143,7 +148,7 @@ fun SettingsScreen(
                     Text("  Exportar respaldo (.zip)")
                 }
                 OutlinedButton(
-                    onClick = { importPicker.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+                    onClick = { showImportChoice = true },
                     enabled = !importing,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -230,6 +235,37 @@ fun SettingsScreen(
             confirmButton = { TextButton(onClick = { showExportPinChoice = false; doExport(true) }) { Text("Con PIN") } },
             dismissButton = { TextButton(onClick = { showExportPinChoice = false; doExport(false) }) { Text("Sin PIN") } }
         )
+    }
+
+    if (showImportChoice) {
+        AlertDialog(
+            onDismissRequest = { showImportChoice = false },
+            title = { Text("Buscar el respaldo") },
+            text = { Text("Elige cómo localizar el archivo .zip. Si tu dispositivo (p. ej. una TV) no abre el selector del sistema, usa el explorador integrado.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showImportChoice = false
+                    importPicker.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+                }) { Text("Selector del sistema") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportChoice = false; showBrowser = true }) { Text("Explorador integrado") }
+            }
+        )
+    }
+
+    if (showBrowser) {
+        Dialog(
+            onDismissRequest = { showBrowser = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = true)
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                FileBrowserScreen(
+                    onPick = { file -> showBrowser = false; pendingImport = android.net.Uri.fromFile(file) },
+                    onClose = { showBrowser = false }
+                )
+            }
+        }
     }
 }
 

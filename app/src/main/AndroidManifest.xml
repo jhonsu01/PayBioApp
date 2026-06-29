@@ -6,6 +6,14 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <!-- Optional: only for the built-in file browser (importing a backup .zip on
+         devices without a system file picker, e.g. some Android TVs).
+         Read access on API <=29; all-files access (granted by the user in Settings)
+         on API >=30. Not used unless the user opens the integrated browser. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
     <application
         android:name=".PayBioApp"
         android:allowBackup="false"

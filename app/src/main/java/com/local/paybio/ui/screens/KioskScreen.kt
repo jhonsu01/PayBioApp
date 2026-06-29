@@ -7,20 +7,18 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items as columnItems
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -50,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.local.paybio.data.PaymentMethod
@@ -60,6 +59,9 @@ import com.local.paybio.ui.components.LogoAvatar
 import com.local.paybio.ui.components.parseColor
 import com.local.paybio.util.PrefsManager
 import com.local.paybio.util.findActivity
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.sqrt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,7 +75,6 @@ fun KioskScreen(
     val all by viewModel.methods.collectAsState()
     val cards = remember(all) { all.filter { it.isFavorite }.ifEmpty { all } }
 
-    // Form factor: TV / non-touch / large screens show everything at once (no menu).
     val config = LocalConfiguration.current
     val pm = context.packageManager
     val isTv = pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
@@ -88,7 +89,6 @@ fun KioskScreen(
     var pin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf(false) }
 
-    // Anti-reposo: keep the screen on and lock the app in the foreground.
     DisposableEffect(Unit) {
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         runCatching { activity?.startLockTask() }
@@ -103,7 +103,6 @@ fun KioskScreen(
     }
 
     BackHandler {
-        // On a phone, "back" returns to the menu first; otherwise it tries to exit.
         if (!showAll && selected != null && cards.size > 1) selected = null else requestExit()
     }
 
@@ -116,23 +115,11 @@ fun KioskScreen(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.align(Alignment.Center).padding(24.dp)
                 )
-                // TV / non-touch / large: every payment method visible at once.
-                showAll -> LazyVerticalGrid(
-                    columns = GridCells.Adaptive(320.dp),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp, 56.dp, 20.dp, 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    gridItems(cards, key = { it.id }) { method -> KioskTile(method) }
-                }
+                // TV / non-touch / large: ALL methods fit on screen at once (no scroll).
+                showAll -> KioskAllGrid(cards, Modifier.padding(start = 16.dp, end = 16.dp, top = 56.dp, bottom = 16.dp))
                 // Small touch screen: menu first, then the selected method.
                 selected == null -> KioskMenu(cards, Modifier.padding(top = 48.dp)) { selected = it }
-                else -> KioskDetail(
-                    method = selected!!,
-                    showBack = cards.size > 1,
-                    onBack = { selected = null }
-                )
+                else -> KioskDetail(method = selected!!, showBack = cards.size > 1, onBack = { selected = null })
             }
 
             IconButton(
@@ -170,6 +157,89 @@ fun KioskScreen(
             },
             dismissButton = { TextButton(onClick = { showPin = false }) { Text("Cancelar") } }
         )
+    }
+}
+
+/** Non-scrolling adaptive grid: computes rows/cols from the count and scales each
+ *  tile (logo + QR) so that EVERY method fits on a large screen / TV at once. */
+@Composable
+private fun KioskAllGrid(cards: List<PaymentMethod>, modifier: Modifier = Modifier) {
+    val n = cards.size
+    val rows = floor(sqrt(n.toFloat())).toInt().coerceAtLeast(1)
+    val cols = ceil(n / rows.toFloat()).toInt().coerceAtLeast(1)
+    val gap = 12.dp
+    Column(modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gap)) {
+        for (r in 0 until rows) {
+            Row(
+                Modifier.fillMaxWidth().weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(gap)
+            ) {
+                for (c in 0 until cols) {
+                    val idx = r * cols + c
+                    if (idx < n) {
+                        Box(Modifier.weight(1f).fillMaxHeight()) { KioskTileFit(cards[idx]) }
+                    } else {
+                        Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** A single tile that measures its cell and sizes the QR/logo to fit (no overflow). */
+@Composable
+private fun KioskTileFit(method: PaymentMethod) {
+    val accent = parseColor(method.colorHex)
+    Card(
+        modifier = Modifier.fillMaxSize(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        BoxWithConstraints(Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
+            val side = minOf(maxWidth, maxHeight).value
+            val qr = (side * 0.38f).toInt().coerceIn(48, 280)
+            val logo = (side * 0.12f).toInt().coerceIn(22, 56)
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                KioskLogo(method, accent, logo)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    method.displayName,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = accent,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    "${method.country} · ${method.type}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(6.dp))
+                CardQr(method = method, sizeDp = qr)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    method.holderName,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    method.accountNumber,
+                    fontFamily = FontFamily.Monospace,
+                    color = accent,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
     }
 }
 
@@ -235,28 +305,6 @@ private fun KioskDetail(method: PaymentMethod, showBack: Boolean, onBack: () -> 
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
             )
-        }
-    }
-}
-
-/** Compact tile used in the TV / large-screen grid (everything visible at once). */
-@Composable
-private fun KioskTile(method: PaymentMethod) {
-    val accent = parseColor(method.colorHex)
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(20.dp)) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            KioskLogo(method, accent, 80)
-            Spacer(Modifier.height(8.dp))
-            Text(method.displayName, style = MaterialTheme.typography.titleLarge, color = accent, textAlign = TextAlign.Center)
-            Text("${method.country} · ${method.type}", color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(12.dp))
-            CardQr(method = method, sizeDp = 240)
-            Spacer(Modifier.height(12.dp))
-            Text(method.holderName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
-            Text(method.accountNumber, fontFamily = FontFamily.Monospace, color = accent, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
         }
     }
 }
