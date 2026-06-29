@@ -108,9 +108,9 @@ fun QrView(content: String, sizeDp: Int = 240, modifier: Modifier = Modifier) {
     if (bmp != null) {
         Box(
             modifier = modifier
-                .size((sizeDp + 24).dp)
-                .background(Color.White, RoundedCornerShape(16.dp))
-                .padding(12.dp),
+                .size((sizeDp + 10).dp)
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .padding(5.dp),
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -189,9 +189,9 @@ fun CardQr(method: PaymentMethod, sizeDp: Int = 240, modifier: Modifier = Modifi
     if (custom != null && File(custom).exists()) {
         Box(
             modifier = modifier
-                .size((sizeDp + 24).dp)
-                .background(Color.White, RoundedCornerShape(16.dp))
-                .padding(12.dp),
+                .size((sizeDp + 10).dp)
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .padding(5.dp),
             contentAlignment = Alignment.Center
         ) {
             AsyncImage(

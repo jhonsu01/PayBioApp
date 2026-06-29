@@ -187,7 +187,10 @@ private fun KioskAllGrid(cards: List<PaymentMethod>, modifier: Modifier = Modifi
     }
 }
 
-/** A single tile that measures its cell and sizes the QR/logo to fit (no overflow). */
+/**
+ * A single tile. The QR takes ALL the leftover vertical space (weight), so it is
+ * as large as possible while the name/holder/account text is never clipped.
+ */
 @Composable
 private fun KioskTileFit(method: PaymentMethod) {
     val accent = parseColor(method.colorHex)
@@ -196,49 +199,53 @@ private fun KioskTileFit(method: PaymentMethod) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(20.dp)
     ) {
-        BoxWithConstraints(Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
-            val side = minOf(maxWidth, maxHeight).value
-            val qr = (side * 0.38f).toInt().coerceIn(48, 280)
-            val logo = (side * 0.12f).toInt().coerceIn(22, 56)
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+        Column(
+            modifier = Modifier.fillMaxSize().padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            KioskLogo(method, accent, 46)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                method.displayName,
+                style = MaterialTheme.typography.titleLarge,
+                color = accent,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                "${method.country} · ${method.type}",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            // QR fills the remaining space and sizes itself to that area.
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 6.dp),
+                contentAlignment = Alignment.Center
             ) {
-                KioskLogo(method, accent, logo)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    method.displayName,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = accent,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    "${method.country} · ${method.type}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(6.dp))
-                CardQr(method = method, sizeDp = qr)
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    method.holderName,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    method.accountNumber,
-                    fontFamily = FontFamily.Monospace,
-                    color = accent,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                BoxWithConstraints(contentAlignment = Alignment.Center) {
+                    val q = (minOf(maxWidth, maxHeight).value - 12f).toInt().coerceIn(48, 360)
+                    CardQr(method = method, sizeDp = q)
+                }
             }
+            Text(
+                method.holderName,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                method.accountNumber,
+                fontFamily = FontFamily.Monospace,
+                color = accent,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

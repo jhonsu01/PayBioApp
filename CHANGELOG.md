@@ -3,6 +3,20 @@
 Todas las versiones notables de PayBio. El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.0] - 2026-06-29
+
+### Corregido
+- **Modo Kiosco (grilla TV):** el número de cuenta ya no se corta. El QR ahora ocupa todo el espacio disponible de cada celda (layout por peso), quedando **más grande**, mientras el nombre y la cuenta siempre se ven completos.
+- **Borde blanco del QR** mucho más delgado y compacto (más QR, menos marco).
+
+### Añadido
+- **Logo / QR personalizado en TV:** al elegir imagen ahora se ofrece "App externa" o "**Explorador interno**" (antes daba "ninguna aplicación" en TV sin galería).
+- **Exportar respaldo:** además de "Compartir", se puede "**Explorador interno**" para elegir una carpeta y guardar el `.zip` directamente.
+- El explorador integrado ahora también navega/selecciona imágenes y carpetas (no solo `.zip`).
+
+### Permisos
+- Se añade WRITE_EXTERNAL_STORAGE (API ≤29) para guardar el respaldo en una carpeta con el explorador interno; en API ≥30 se cubre con el acceso a todos los archivos. Sigue **sin Internet**.
+
 ## [1.4.0] - 2026-06-29
 
 ### Añadido
@@ -63,6 +77,7 @@ y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Fast-Share** de QR + datos y **widget** de pantalla de inicio.
 - Pipeline de **GitHub Actions**: CI en cada push y publicación automática del APK en Releases por tag `v*`.
 
+[1.5.0]: ../../releases/tag/v1.5.0
 [1.4.0]: ../../releases/tag/v1.4.0
 [1.3.0]: ../../releases/tag/v1.3.0
 [1.2.0]: ../../releases/tag/v1.2.0

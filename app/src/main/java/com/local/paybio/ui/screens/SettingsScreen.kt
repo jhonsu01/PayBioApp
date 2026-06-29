@@ -45,6 +45,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import java.io.File
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -74,6 +75,9 @@ fun SettingsScreen(
     var importing by remember { mutableStateOf(false) }
     var showRestart by remember { mutableStateOf(false) }
     var showExportPinChoice by remember { mutableStateOf(false) }
+    var showExportDest by remember { mutableStateOf(false) }
+    var showExportBrowser by remember { mutableStateOf(false) }
+    var exportPin by remember { mutableStateOf(false) }
     var showImportChoice by remember { mutableStateOf(false) }
     var showBrowser by remember { mutableStateOf(false) }
 
@@ -81,13 +85,30 @@ fun SettingsScreen(
         if (uri != null) pendingImport = uri
     }
 
-    fun doExport(includePin: Boolean) {
+    // Step 1 of export: decide whether to ask for the PIN, then offer a destination.
+    fun startExport() {
+        if (prefs.hasPin) showExportPinChoice = true else { exportPin = false; showExportDest = true }
+    }
+
+    fun doShare(includePin: Boolean) {
         val zip = BackupManager.createBackupZip(context, includePin)
         if (zip != null) {
             ShareUtil.shareFile(context, zip, "application/zip", "Respaldo PayBio")
         } else {
             Toast.makeText(context, "No hay datos para respaldar.", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun saveToFolder(dir: File, includePin: Boolean) {
+        val zip = BackupManager.createBackupZip(context, includePin)
+        if (zip == null) {
+            Toast.makeText(context, "No hay datos para respaldar.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val dest = File(dir, zip.name)
+        runCatching { zip.copyTo(dest, overwrite = true) }
+            .onSuccess { Toast.makeText(context, "Respaldo guardado:\n${dest.path}", Toast.LENGTH_LONG).show() }
+            .onFailure { Toast.makeText(context, "No se pudo guardar: ${it.message}", Toast.LENGTH_LONG).show() }
     }
 
     Scaffold(
@@ -141,7 +162,7 @@ fun SettingsScreen(
                 body = "Empaqueta la base cifrada, tus imágenes (QR/logos) y la clave en un .zip. Tú decides dónde guardarlo (Drive, mensajería, USB). El respaldo incluye la clave para poder restaurarlo: guárdalo en un lugar seguro."
             ) {
                 Button(
-                    onClick = { if (prefs.hasPin) showExportPinChoice = true else doExport(false) },
+                    onClick = { startExport() },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Filled.Archive, contentDescription = null)
@@ -232,9 +253,35 @@ fun SettingsScreen(
             onDismissRequest = { showExportPinChoice = false },
             title = { Text("¿Incluir el PIN del Kiosco?") },
             text = { Text("Puedes incluir el PIN del Modo Kiosco en el respaldo para recuperarlo al restaurar, o exportar sin él.") },
-            confirmButton = { TextButton(onClick = { showExportPinChoice = false; doExport(true) }) { Text("Con PIN") } },
-            dismissButton = { TextButton(onClick = { showExportPinChoice = false; doExport(false) }) { Text("Sin PIN") } }
+            confirmButton = { TextButton(onClick = { exportPin = true; showExportPinChoice = false; showExportDest = true }) { Text("Con PIN") } },
+            dismissButton = { TextButton(onClick = { exportPin = false; showExportPinChoice = false; showExportDest = true }) { Text("Sin PIN") } }
         )
+    }
+
+    if (showExportDest) {
+        AlertDialog(
+            onDismissRequest = { showExportDest = false },
+            title = { Text("Guardar respaldo") },
+            text = { Text("Comparte el .zip con una app (mensajería, archivos…) o guárdalo en una carpeta con el explorador interno.") },
+            confirmButton = { TextButton(onClick = { showExportDest = false; doShare(exportPin) }) { Text("Compartir (apps)") } },
+            dismissButton = { TextButton(onClick = { showExportDest = false; showExportBrowser = true }) { Text("Explorador interno") } }
+        )
+    }
+
+    if (showExportBrowser) {
+        Dialog(
+            onDismissRequest = { showExportBrowser = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = true)
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                FileBrowserScreen(
+                    title = "Guardar respaldo en…",
+                    extensions = null,
+                    onPick = { dir -> showExportBrowser = false; saveToFolder(dir, exportPin) },
+                    onClose = { showExportBrowser = false }
+                )
+            }
+        }
     }
 
     if (showImportChoice) {
@@ -261,6 +308,8 @@ fun SettingsScreen(
         ) {
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                 FileBrowserScreen(
+                    title = "Buscar respaldo",
+                    extensions = listOf("zip"),
                     onPick = { file -> showBrowser = false; pendingImport = android.net.Uri.fromFile(file) },
                     onClose = { showBrowser = false }
                 )

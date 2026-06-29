@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,6 +48,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.text.KeyboardOptions
 import coil.compose.AsyncImage
 import com.local.paybio.data.PaymentMethod
@@ -113,6 +116,9 @@ fun AddEditScreen(
     val qrPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { qrPath = ImageStore.save(context, it, "qrs", "qr") }
     }
+    // "logo" / "qr": which image we're picking (choice dialog), and which uses the internal browser.
+    var pickTarget by remember { mutableStateOf<String?>(null) }
+    var browseTarget by remember { mutableStateOf<String?>(null) }
 
     val accountInvalid = accountNumber.isNotBlank() && selectedMethod != null && !selectedMethod.matches(accountNumber)
     val canSave = country.isNotBlank() && platform.isNotBlank() &&
@@ -236,7 +242,7 @@ fun AddEditScreen(
                 title = "Logo del banco / servicio (opcional)",
                 path = logoPath,
                 icon = { Icon(Icons.Filled.Image, contentDescription = null) },
-                onPick = { logoPicker.launch("image/*") },
+                onPick = { pickTarget = "logo" },
                 onClear = { logoPath = null }
             )
             // --- QR personalizado ---
@@ -244,7 +250,7 @@ fun AddEditScreen(
                 title = "QR personalizado (opcional, reemplaza al generado)",
                 path = qrPath,
                 icon = { Icon(Icons.Filled.QrCode2, contentDescription = null) },
-                onPick = { qrPicker.launch("image/*") },
+                onPick = { pickTarget = "qr" },
                 onClear = { qrPath = null }
             )
 
@@ -278,6 +284,45 @@ fun AddEditScreen(
                 Text(if (methodId == -1) "Guardar tarjeta" else "Actualizar")
             }
             Spacer(Modifier.width(8.dp))
+        }
+    }
+
+    // Choice: external gallery app vs the built-in browser (for TVs without a gallery).
+    pickTarget?.let { target ->
+        AlertDialog(
+            onDismissRequest = { pickTarget = null },
+            title = { Text("Seleccionar imagen") },
+            text = { Text("Elige cómo buscar la imagen. En TV sin galería, usa el explorador interno.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    pickTarget = null
+                    if (target == "logo") logoPicker.launch("image/*") else qrPicker.launch("image/*")
+                }) { Text("App externa") }
+            },
+            dismissButton = {
+                TextButton(onClick = { browseTarget = target; pickTarget = null }) { Text("Explorador interno") }
+            }
+        )
+    }
+
+    browseTarget?.let { target ->
+        Dialog(
+            onDismissRequest = { browseTarget = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = true)
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                FileBrowserScreen(
+                    title = if (target == "logo") "Buscar logo" else "Buscar QR",
+                    extensions = listOf("jpg", "jpeg", "png", "webp", "gif", "bmp"),
+                    onPick = { file ->
+                        val uri = android.net.Uri.fromFile(file)
+                        if (target == "logo") logoPath = ImageStore.save(context, uri, "logos", "logo")
+                        else qrPath = ImageStore.save(context, uri, "qrs", "qr")
+                        browseTarget = null
+                    },
+                    onClose = { browseTarget = null }
+                )
+            }
         }
     }
 }
