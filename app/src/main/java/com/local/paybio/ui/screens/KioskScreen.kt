@@ -188,8 +188,9 @@ private fun KioskAllGrid(cards: List<PaymentMethod>, modifier: Modifier = Modifi
 }
 
 /**
- * A single tile. The QR takes ALL the leftover vertical space (weight), so it is
- * as large as possible while the name/holder/account text is never clipped.
+ * A single tile. On wide (landscape) cells it splits side-by-side: payment info on
+ * the left, a LARGE QR on the right (uses the TV space well). On tall cells it stacks
+ * vertically. Either way the QR takes the leftover space and text is never clipped.
  */
 @Composable
 private fun KioskTileFit(method: PaymentMethod) {
@@ -199,55 +200,88 @@ private fun KioskTileFit(method: PaymentMethod) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(20.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            KioskLogo(method, accent, 46)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                method.displayName,
-                style = MaterialTheme.typography.titleLarge,
-                color = accent,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                "${method.country} · ${method.type}",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            // QR fills the remaining space and sizes itself to that area.
-            Box(
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 6.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                BoxWithConstraints(contentAlignment = Alignment.Center) {
-                    val q = (minOf(maxWidth, maxHeight).value - 12f).toInt().coerceIn(48, 360)
-                    CardQr(method = method, sizeDp = q)
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            if (maxWidth >= maxHeight) {
+                // Wide cell -> info | QR
+                Row(Modifier.fillMaxSize().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(
+                        modifier = Modifier.weight(0.42f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        KioskLogo(method, accent, 56)
+                        Spacer(Modifier.height(8.dp))
+                        TileTexts(method, accent)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Box(Modifier.weight(0.58f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        BoxWithConstraints(contentAlignment = Alignment.Center) {
+                            val q = (minOf(maxWidth, maxHeight).value - 8f).toInt().coerceIn(60, 460)
+                            CardQr(method = method, sizeDp = q)
+                        }
+                    }
+                }
+            } else {
+                // Tall cell -> stacked, QR fills the remaining space
+                Column(Modifier.fillMaxSize().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    KioskLogo(method, accent, 46)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        method.displayName,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = accent, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
+                    )
+                    Text(
+                        "${method.country} · ${method.type}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BoxWithConstraints(contentAlignment = Alignment.Center) {
+                            val q = (minOf(maxWidth, maxHeight).value - 12f).toInt().coerceIn(48, 360)
+                            CardQr(method = method, sizeDp = q)
+                        }
+                    }
+                    Text(
+                        method.holderName,
+                        color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
+                    )
+                    Text(
+                        method.accountNumber,
+                        fontFamily = FontFamily.Monospace, color = accent, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
-            Text(
-                method.holderName,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                method.accountNumber,
-                fontFamily = FontFamily.Monospace,
-                color = accent,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
+}
+
+@Composable
+private fun TileTexts(method: PaymentMethod, accent: androidx.compose.ui.graphics.Color) {
+    Text(
+        method.displayName,
+        style = MaterialTheme.typography.titleLarge,
+        color = accent, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
+    )
+    Text(
+        "${method.country} · ${method.type}",
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
+    )
+    Spacer(Modifier.height(10.dp))
+    Text(
+        method.holderName,
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
+    )
+    Text(
+        method.accountNumber,
+        fontFamily = FontFamily.Monospace, color = accent, maxLines = 1,
+        overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
+    )
 }
 
 /** Phone menu: a "Medios de pago" list to choose which card to display. */

@@ -3,6 +3,14 @@
 Todas las versiones notables de PayBio. El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.6.0] - 2026-06-29
+
+### Cambiado
+- **Modo Kiosco (TV) aprovecha mejor el espacio:** cada recuadro ahora se divide en dos cuando la celda es ancha — **información de pago a un lado y el QR grande al otro** — para que el QR sea mucho mayor. En celdas altas mantiene el formato vertical. El tamaño se adapta solo a cada celda.
+
+### Añadido
+- **Realce de foco para control remoto / TV:** al navegar las tarjetas del inicio con el D-pad, la tarjeta enfocada se resalta (borde de color, leve aumento y elevación), para no perder de vista cuál está seleccionada al editar.
+
 ## [1.5.0] - 2026-06-29
 
 ### Corregido
@@ -77,6 +85,7 @@ y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Fast-Share** de QR + datos y **widget** de pantalla de inicio.
 - Pipeline de **GitHub Actions**: CI en cada push y publicación automática del APK en Releases por tag `v*`.
 
+[1.6.0]: ../../releases/tag/v1.6.0
 [1.5.0]: ../../releases/tag/v1.5.0
 [1.4.0]: ../../releases/tag/v1.4.0
 [1.3.0]: ../../releases/tag/v1.3.0

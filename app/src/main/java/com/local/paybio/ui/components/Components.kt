@@ -24,9 +24,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -57,13 +63,20 @@ fun PaymentCard(
     modifier: Modifier = Modifier
 ) {
     val accent = parseColor(method.colorHex)
+    val shape = RoundedCornerShape(20.dp)
+    var focused by remember { mutableStateOf(false) }
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .scale(if (focused) 1.025f else 1f)
+            .onFocusChanged { focused = it.isFocused }
+            .border(if (focused) 3.dp else 0.dp, if (focused) accent else Color.Transparent, shape)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(20.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = if (focused) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (focused) 12.dp else 2.dp),
+        shape = shape
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
