@@ -46,7 +46,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.local.paybio.data.PaymentMethod
 import com.local.paybio.ui.PaymentViewModel
-import com.local.paybio.ui.components.QrView
+import com.local.paybio.ui.components.CardQr
 import com.local.paybio.ui.components.parseColor
 import com.local.paybio.util.ShareUtil
 
@@ -69,7 +69,7 @@ fun DetailScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(method?.platformName ?: "Detalle") },
+                title = { Text(method?.displayName ?: "Detalle") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
@@ -103,13 +103,14 @@ fun DetailScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            QrView(content = m.accountNumber)
+            CardQr(method = m)
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (!m.label.isNullOrBlank()) LabelValue("Nombre", m.label)
                     LabelValue("Plataforma", m.platformName)
                     LabelValue("País / Red", m.country)
                     LabelValue("Tipo", m.type)

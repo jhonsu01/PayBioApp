@@ -23,4 +23,14 @@ object DbKey {
         prefs.edit().putString(KEY, key).apply()
         return key
     }
+
+    /** Current key without creating one (null if none yet). */
+    fun peek(context: Context): String? =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)
+
+    /** Overwrites the key — used when restoring a backup that carries its own key. */
+    fun set(context: Context, key: String) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putString(KEY, key).apply()
+    }
 }

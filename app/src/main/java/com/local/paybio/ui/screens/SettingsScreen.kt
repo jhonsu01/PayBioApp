@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -36,10 +37,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.rememberCoroutineScope
 import com.local.paybio.backup.BackupManager
 import com.local.paybio.util.PrefsManager
 import com.local.paybio.util.ShareUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,9 +58,17 @@ fun SettingsScreen(
     onOpenKiosk: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val prefs = remember { PrefsManager(context) }
     var hasPin by remember { mutableStateOf(prefs.hasPin) }
     var showPinDialog by remember { mutableStateOf(false) }
+    var pendingImport by remember { mutableStateOf<Uri?>(null) }
+    var importing by remember { mutableStateOf(false) }
+    var showRestart by remember { mutableStateOf(false) }
+
+    val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) pendingImport = uri
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -96,7 +114,7 @@ fun SettingsScreen(
 
             SectionCard(
                 title = "Respaldo Cero-Nube",
-                body = "Empaqueta la base de datos cifrada y tus imágenes QR en un .zip. Tú decides dónde guardarlo (Drive, mensajería, USB). PayBio no usa servidores."
+                body = "Empaqueta la base cifrada, tus imágenes (QR/logos) y la clave en un .zip. Tú decides dónde guardarlo (Drive, mensajería, USB). El respaldo incluye la clave para poder restaurarlo: guárdalo en un lugar seguro."
             ) {
                 Button(
                     onClick = {
@@ -111,6 +129,14 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Filled.Archive, contentDescription = null)
                     Text("  Exportar respaldo (.zip)")
+                }
+                OutlinedButton(
+                    onClick = { importPicker.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+                    enabled = !importing,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Unarchive, contentDescription = null)
+                    Text(if (importing) "  Importando…" else "  Importar respaldo (.zip)")
                 }
             }
 
@@ -127,6 +153,46 @@ fun SettingsScreen(
             onDismiss = { showPinDialog = false }
         )
     }
+
+    pendingImport?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { if (!importing) pendingImport = null },
+            title = { Text("Importar respaldo") },
+            text = { Text("Esto reemplazará TODAS tus tarjetas actuales con las del respaldo. ¿Continuar?") },
+            confirmButton = {
+                TextButton(
+                    enabled = !importing,
+                    onClick = {
+                        importing = true
+                        scope.launch {
+                            val ok = withContext(Dispatchers.IO) { BackupManager.importBackupZip(context, uri) }
+                            importing = false
+                            pendingImport = null
+                            if (ok) showRestart = true
+                            else Toast.makeText(context, "No se pudo importar (¿zip válido?).", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                ) { Text("Importar") }
+            },
+            dismissButton = { TextButton(enabled = !importing, onClick = { pendingImport = null }) { Text("Cancelar") } }
+        )
+    }
+
+    if (showRestart) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Respaldo importado") },
+            text = { Text("Reinicia la app para cargar los datos restaurados.") },
+            confirmButton = { TextButton(onClick = { restartApp(context) }) { Text("Reiniciar ahora") } }
+        )
+    }
+}
+
+private fun restartApp(context: Context) {
+    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+    intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    context.startActivity(intent)
+    Runtime.getRuntime().exit(0)
 }
 
 @Composable

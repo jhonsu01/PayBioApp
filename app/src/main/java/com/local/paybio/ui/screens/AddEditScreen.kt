@@ -1,5 +1,7 @@
 package com.local.paybio.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,23 +9,28 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -34,12 +41,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
+import coil.compose.AsyncImage
 import com.local.paybio.data.PaymentMethod
 import com.local.paybio.ui.PaymentViewModel
+import com.local.paybio.util.ImageStore
+import java.io.File
+
+private const val OTHER_COUNTRY = "➕ Otro país…"
+private const val OTHER_PLATFORM = "➕ Otra plataforma…"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,15 +63,21 @@ fun AddEditScreen(
     onDone: () -> Unit,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val catalog = viewModel.catalog
 
     var country by remember { mutableStateOf("") }
     var platform by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("") }
+    var label by remember { mutableStateOf("") }
     var color by remember { mutableStateOf("#00E676") }
     var holderName by remember { mutableStateOf("") }
     var accountNumber by remember { mutableStateOf("") }
     var isFavorite by remember { mutableStateOf(false) }
+    var logoPath by remember { mutableStateOf<String?>(null) }
+    var qrPath by remember { mutableStateOf<String?>(null) }
+    var customCountry by remember { mutableStateOf(false) }
+    var customPlatform by remember { mutableStateOf(false) }
 
     LaunchedEffect(methodId) {
         if (methodId != -1) {
@@ -65,6 +85,10 @@ fun AddEditScreen(
                 country = m.country; platform = m.platformName; type = m.type
                 color = m.colorHex; holderName = m.holderName
                 accountNumber = m.accountNumber; isFavorite = m.isFavorite
+                label = m.label ?: ""; logoPath = m.logoImagePath; qrPath = m.qrCodeImagePath
+                val cat = catalog.find { it.name == m.country }
+                customCountry = cat == null
+                customPlatform = cat?.methods?.none { it.platform == m.platformName } ?: true
             }
         } else {
             viewModel.pendingPrefill?.let { p ->
@@ -76,10 +100,16 @@ fun AddEditScreen(
     }
 
     val selectedCountry = catalog.find { it.name == country }
-    val selectedMethod = selectedCountry?.methods?.find { it.platform == platform }
-    // keep type/color in sync with the chosen template
-    LaunchedEffect(platform) {
-        selectedMethod?.let { type = it.type; color = it.color }
+    val selectedMethod = if (customPlatform) null else selectedCountry?.methods?.find { it.platform == platform }
+    LaunchedEffect(platform, customPlatform) {
+        if (!customPlatform) selectedMethod?.let { type = it.type; color = it.color }
+    }
+
+    val logoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { logoPath = ImageStore.save(context, it, "logos", "logo") }
+    }
+    val qrPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { qrPath = ImageStore.save(context, it, "qrs", "qr") }
     }
 
     val accountInvalid = accountNumber.isNotBlank() && selectedMethod != null && !selectedMethod.matches(accountNumber)
@@ -112,23 +142,67 @@ fun AddEditScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // --- País / Red ---
             DropdownField(
                 label = "País / Red",
-                value = country,
-                options = catalog.map { it.name },
-                onSelected = { country = it; platform = "" }
+                value = if (customCountry) OTHER_COUNTRY else country,
+                options = catalog.map { it.name } + OTHER_COUNTRY,
+                onSelected = { sel ->
+                    if (sel == OTHER_COUNTRY) {
+                        customCountry = true; country = ""; platform = ""; customPlatform = true
+                    } else {
+                        customCountry = false; country = sel; platform = ""; customPlatform = false
+                    }
+                }
             )
-            DropdownField(
-                label = "Plataforma",
-                value = platform,
-                options = selectedCountry?.methods?.map { it.platform } ?: emptyList(),
-                enabled = selectedCountry != null,
-                onSelected = { platform = it }
-            )
+            if (customCountry) {
+                OutlinedTextField(
+                    value = country,
+                    onValueChange = { country = it },
+                    label = { Text("Nombre del país / red") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // --- Plataforma ---
+            if (customCountry || customPlatform) {
+                OutlinedTextField(
+                    value = platform,
+                    onValueChange = { platform = it },
+                    label = { Text("Plataforma (personalizada)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (!customCountry) {
+                    TextButton(onClick = { customPlatform = false; platform = "" }) {
+                        Text("Elegir de la lista")
+                    }
+                }
+            } else {
+                DropdownField(
+                    label = "Plataforma",
+                    value = platform,
+                    options = (selectedCountry?.methods?.map { it.platform } ?: emptyList()) + OTHER_PLATFORM,
+                    enabled = selectedCountry != null,
+                    onSelected = { sel ->
+                        if (sel == OTHER_PLATFORM) { customPlatform = true; platform = "" }
+                        else platform = sel
+                    }
+                )
+            }
+
             OutlinedTextField(
                 value = type,
                 onValueChange = { type = it },
                 label = { Text("Tipo") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = label,
+                onValueChange = { label = it },
+                label = { Text("Nombre de la tarjeta (opcional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -154,6 +228,24 @@ fun AddEditScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // --- Logo personalizado ---
+            ImagePickerRow(
+                title = "Logo del banco / servicio (opcional)",
+                path = logoPath,
+                icon = { Icon(Icons.Filled.Image, contentDescription = null) },
+                onPick = { logoPicker.launch("image/*") },
+                onClear = { logoPath = null }
+            )
+            // --- QR personalizado ---
+            ImagePickerRow(
+                title = "QR personalizado (opcional, reemplaza al generado)",
+                path = qrPath,
+                icon = { Icon(Icons.Filled.QrCode2, contentDescription = null) },
+                onPick = { qrPicker.launch("image/*") },
+                onClear = { qrPath = null }
+            )
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Switch(checked = isFavorite, onCheckedChange = { isFavorite = it })
                 Spacer(Modifier.width(8.dp))
@@ -164,11 +256,14 @@ fun AddEditScreen(
                     viewModel.save(
                         PaymentMethod(
                             id = if (methodId == -1) 0 else methodId,
-                            country = country,
-                            platformName = platform,
+                            country = country.trim(),
+                            platformName = platform.trim(),
                             type = type.ifBlank { "Otro" },
                             holderName = holderName,
                             accountNumber = accountNumber.trim(),
+                            qrCodeImagePath = qrPath,
+                            logoImagePath = logoPath,
+                            label = label.ifBlank { null },
                             colorHex = color,
                             isFavorite = isFavorite
                         )
@@ -181,6 +276,35 @@ fun AddEditScreen(
                 Text(if (methodId == -1) "Guardar tarjeta" else "Actualizar")
             }
             Spacer(Modifier.width(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun ImagePickerRow(
+    title: String,
+    path: String?,
+    icon: @Composable () -> Unit,
+    onPick: () -> Unit,
+    onClear: () -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (path != null && File(path).exists()) {
+            AsyncImage(
+                model = File(path),
+                contentDescription = null,
+                modifier = Modifier.size(44.dp)
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(180.dp))
+            Spacer(Modifier.width(4.dp))
+            TextButton(onClick = onClear) { Text("Quitar") }
+        } else {
+            OutlinedButton(onClick = onPick, modifier = Modifier.fillMaxWidth()) {
+                icon()
+                Spacer(Modifier.width(8.dp))
+                Text(title)
+            }
         }
     }
 }

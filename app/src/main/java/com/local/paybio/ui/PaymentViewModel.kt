@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -31,6 +32,7 @@ class PaymentViewModel(app: Application) : AndroidViewModel(app) {
     val catalog: List<CatalogCountry> = PaymentCatalog.load(app)
 
     val methods: StateFlow<List<PaymentMethod>> = repo.observeAll()
+        .catch { emit(emptyList()) } // survive DB close during backup restore
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _ingest = MutableStateFlow<IngestUiState>(IngestUiState.Idle)

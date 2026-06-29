@@ -40,7 +40,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.local.paybio.data.PaymentMethod
 import com.local.paybio.ui.PaymentViewModel
-import com.local.paybio.ui.components.QrView
+import com.local.paybio.ui.components.CardQr
+import com.local.paybio.ui.components.LogoAvatar
 import com.local.paybio.ui.components.parseColor
 import com.local.paybio.util.PrefsManager
 import com.local.paybio.util.findActivity
@@ -139,10 +140,12 @@ private fun KioskCard(method: PaymentMethod, index: Int, total: Int) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(method.platformName, style = MaterialTheme.typography.headlineLarge, color = accent)
+        LogoAvatar(method, accent, 64)
+        Spacer(Modifier.height(12.dp))
+        Text(method.displayName, style = MaterialTheme.typography.headlineLarge, color = accent)
         Text("${method.country} · ${method.type}", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(24.dp))
-        QrView(content = method.accountNumber, sizeDp = 300)
+        CardQr(method = method, sizeDp = 300)
         Spacer(Modifier.height(24.dp))
         Text(method.holderName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
         Text(

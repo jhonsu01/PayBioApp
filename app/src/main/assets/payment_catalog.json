@@ -7,7 +7,8 @@
         { "platform": "Nequi", "type": "Billetera Virtual", "color": "#DA0081", "pattern": "^3\\d{9}$", "hint": "Celular de 10 dígitos" },
         { "platform": "Daviplata", "type": "Billetera Virtual", "color": "#ED1C27", "pattern": "^3\\d{9}$", "hint": "Celular de 10 dígitos" },
         { "platform": "Bancolombia", "type": "Cuenta Bancaria", "color": "#FDDA24", "pattern": "^\\d{10,11}$", "hint": "Número de cuenta" },
-        { "platform": "PSE / Llave", "type": "Transferencia", "color": "#00A859", "pattern": "^.{3,40}$", "hint": "Llave o correo" }
+        { "platform": "PSE", "type": "Transferencia", "color": "#00A859", "pattern": "^.{3,40}$", "hint": "Banco / referencia PSE" },
+        { "platform": "Llave (Bre-B)", "type": "Transferencia", "color": "#0033A0", "pattern": "^@?[\\w.@+-]{3,40}$", "hint": "Llave Bre-B: @llave, celular, correo o documento" }
       ]
     },
     {

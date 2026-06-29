@@ -3,6 +3,20 @@
 Todas las versiones notables de PayBio. El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.0] - 2026-06-29
+
+### Añadido
+- **Plataforma personalizada:** opción "➕ Otra…" para crear una plataforma que no esté en el catálogo.
+- **País / red personalizado:** opción "➕ Otro país…" para agregar uno no listado.
+- **Nombre personalizado por tarjeta** (alias) que se muestra en lista, detalle y kiosco.
+- **Logo propio** por tarjeta y **QR personalizado** (reemplaza al generado); se usan también en Modo Kiosco.
+- **Importar respaldo .zip** en Ajustes (restaura tarjetas, imágenes y clave; reinicia la app).
+- Colombia: **PSE** y **Llave (Bre-B)** ahora son plataformas separadas.
+
+### Cambiado
+- El respaldo .zip ahora incluye los logos y la clave de cifrado, para poder restaurarlo en cualquier dispositivo.
+- Base de datos migrada a v2 (columnas `label` y `logoImagePath`) sin pérdida de datos.
+
 ## [1.1.0] - 2026-06-29
 
 ### Cambiado
@@ -26,5 +40,6 @@ y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Fast-Share** de QR + datos y **widget** de pantalla de inicio.
 - Pipeline de **GitHub Actions**: CI en cada push y publicación automática del APK en Releases por tag `v*`.
 
+[1.2.0]: ../../releases/tag/v1.2.0
 [1.1.0]: ../../releases/tag/v1.1.0
 [1.0.0]: ../../releases/tag/v1.0.0
