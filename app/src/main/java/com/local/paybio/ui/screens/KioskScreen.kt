@@ -1,20 +1,33 @@
 package com.local.paybio.ui.screens
 
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items as columnItems
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import com.local.paybio.data.PaymentMethod
 import com.local.paybio.ui.PaymentViewModel
 import com.local.paybio.ui.components.CardQr
+import com.local.paybio.ui.components.KioskLogo
 import com.local.paybio.ui.components.LogoAvatar
 import com.local.paybio.ui.components.parseColor
 import com.local.paybio.util.PrefsManager
@@ -57,6 +72,17 @@ fun KioskScreen(
     val prefs = remember { PrefsManager(context) }
     val all by viewModel.methods.collectAsState()
     val cards = remember(all) { all.filter { it.isFavorite }.ifEmpty { all } }
+
+    // Form factor: TV / non-touch / large screens show everything at once (no menu).
+    val config = LocalConfiguration.current
+    val pm = context.packageManager
+    val isTv = pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
+        pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION) ||
+        (config.uiMode and Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION
+    val isTouch = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+    val showAll = isTv || !isTouch || config.screenWidthDp >= 600
+
+    var selected by remember(cards) { mutableStateOf(if (cards.size == 1) cards.first() else null) }
 
     var showPin by remember { mutableStateOf(false) }
     var pin by remember { mutableStateOf("") }
@@ -76,22 +102,37 @@ fun KioskScreen(
         if (prefs.hasPin) { pin = ""; error = false; showPin = true } else onExit()
     }
 
-    BackHandler { requestExit() }
+    BackHandler {
+        // On a phone, "back" returns to the menu first; otherwise it tries to exit.
+        if (!showAll && selected != null && cards.size > 1) selected = null else requestExit()
+    }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { inner ->
         Box(Modifier.padding(inner).fillMaxSize()) {
-            if (cards.isEmpty()) {
-                Text(
+            when {
+                cards.isEmpty() -> Text(
                     "Agrega tarjetas para mostrarlas en Modo Kiosco.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.align(Alignment.Center).padding(24.dp)
                 )
-            } else {
-                val pagerState = rememberPagerState(pageCount = { cards.size })
-                HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-                    KioskCard(cards[page], page + 1, cards.size)
+                // TV / non-touch / large: every payment method visible at once.
+                showAll -> LazyVerticalGrid(
+                    columns = GridCells.Adaptive(320.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp, 56.dp, 20.dp, 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    gridItems(cards, key = { it.id }) { method -> KioskTile(method) }
                 }
+                // Small touch screen: menu first, then the selected method.
+                selected == null -> KioskMenu(cards, Modifier.padding(top = 48.dp)) { selected = it }
+                else -> KioskDetail(
+                    method = selected!!,
+                    showBack = cards.size > 1,
+                    onBack = { selected = null }
+                )
             }
 
             IconButton(
@@ -132,30 +173,90 @@ fun KioskScreen(
     }
 }
 
+/** Phone menu: a "Medios de pago" list to choose which card to display. */
 @Composable
-private fun KioskCard(method: PaymentMethod, index: Int, total: Int) {
-    val accent = parseColor(method.colorHex)
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        LogoAvatar(method, accent, 64)
-        Spacer(Modifier.height(12.dp))
-        Text(method.displayName, style = MaterialTheme.typography.headlineLarge, color = accent)
-        Text("${method.country} · ${method.type}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(24.dp))
-        CardQr(method = method, sizeDp = 300)
-        Spacer(Modifier.height(24.dp))
-        Text(method.holderName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+private fun KioskMenu(cards: List<PaymentMethod>, modifier: Modifier = Modifier, onSelect: (PaymentMethod) -> Unit) {
+    Column(modifier.fillMaxSize().padding(16.dp)) {
         Text(
-            method.accountNumber,
-            fontFamily = FontFamily.Monospace,
-            color = accent,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            "Medios de pago",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 12.dp)
         )
-        Spacer(Modifier.height(16.dp))
-        Text("$index / $total", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            columnItems(cards, key = { it.id }) { method ->
+                val accent = parseColor(method.colorHex)
+                Card(
+                    modifier = Modifier.fillMaxWidth().clickable { onSelect(method) },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        LogoAvatar(method, accent, 52)
+                        Spacer(Modifier.width(14.dp))
+                        Column {
+                            Text(method.displayName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                            Text("${method.country} · ${method.type}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Single payment method, full screen, with a large logo. */
+@Composable
+private fun KioskDetail(method: PaymentMethod, showBack: Boolean, onBack: () -> Unit) {
+    val accent = parseColor(method.colorHex)
+    Box(Modifier.fillMaxSize()) {
+        if (showBack) {
+            TextButton(onClick = onBack, modifier = Modifier.align(Alignment.TopStart).padding(8.dp)) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = accent)
+                Text("  Medios de pago", color = accent)
+            }
+        }
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            KioskLogo(method, accent, 120)
+            Spacer(Modifier.height(12.dp))
+            Text(method.displayName, style = MaterialTheme.typography.headlineLarge, color = accent, textAlign = TextAlign.Center)
+            Text("${method.country} · ${method.type}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(20.dp))
+            CardQr(method = method, sizeDp = 300)
+            Spacer(Modifier.height(20.dp))
+            Text(method.holderName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
+            Text(
+                method.accountNumber,
+                fontFamily = FontFamily.Monospace,
+                color = accent,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            )
+        }
+    }
+}
+
+/** Compact tile used in the TV / large-screen grid (everything visible at once). */
+@Composable
+private fun KioskTile(method: PaymentMethod) {
+    val accent = parseColor(method.colorHex)
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(20.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            KioskLogo(method, accent, 80)
+            Spacer(Modifier.height(8.dp))
+            Text(method.displayName, style = MaterialTheme.typography.titleLarge, color = accent, textAlign = TextAlign.Center)
+            Text("${method.country} · ${method.type}", color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(12.dp))
+            CardQr(method = method, sizeDp = 240)
+            Spacer(Modifier.height(12.dp))
+            Text(method.holderName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center)
+            Text(method.accountNumber, fontFamily = FontFamily.Monospace, color = accent, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+        }
     }
 }

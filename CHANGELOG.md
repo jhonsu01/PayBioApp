@@ -3,6 +3,17 @@
 Todas las versiones notables de PayBio. El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.3.0] - 2026-06-29
+
+### Añadido
+- **Respaldo con PIN opcional:** al exportar se pregunta si incluir el PIN del Modo Kiosco; al importar se restaura si está presente.
+- **Modo Kiosco adaptable:** en pantallas pequeñas, menú "Medios de pago" para elegir qué mostrar; en TV / pantallas no táctiles / grandes, se muestran todos los medios a la vez en grilla (sin menú) con imágenes ajustadas.
+- **Logo más grande** y con encuadre completo (Fit) en el Modo Kiosco.
+- **Botón de apoyo Ko-fi** al final de Ajustes (abre el navegador; la app sigue sin permiso de Internet).
+
+### Corregido
+- **Ajustes ahora se desplaza** hasta el final (antes se cortaba antes de "Privacidad" en algunos teléfonos).
+
 ## [1.2.0] - 2026-06-29
 
 ### Añadido
@@ -40,6 +51,7 @@ y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Fast-Share** de QR + datos y **widget** de pantalla de inicio.
 - Pipeline de **GitHub Actions**: CI en cada push y publicación automática del APK en Releases por tag `v*`.
 
+[1.3.0]: ../../releases/tag/v1.3.0
 [1.2.0]: ../../releases/tag/v1.2.0
 [1.1.0]: ../../releases/tag/v1.1.0
 [1.0.0]: ../../releases/tag/v1.0.0

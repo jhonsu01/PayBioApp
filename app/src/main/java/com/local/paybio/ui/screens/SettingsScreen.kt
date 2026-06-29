@@ -7,13 +7,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -65,9 +70,19 @@ fun SettingsScreen(
     var pendingImport by remember { mutableStateOf<Uri?>(null) }
     var importing by remember { mutableStateOf(false) }
     var showRestart by remember { mutableStateOf(false) }
+    var showExportPinChoice by remember { mutableStateOf(false) }
 
     val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) pendingImport = uri
+    }
+
+    fun doExport(includePin: Boolean) {
+        val zip = BackupManager.createBackupZip(context, includePin)
+        if (zip != null) {
+            ShareUtil.shareFile(context, zip, "application/zip", "Respaldo PayBio")
+        } else {
+            Toast.makeText(context, "No hay datos para respaldar.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     Scaffold(
@@ -89,7 +104,11 @@ fun SettingsScreen(
         }
     ) { inner ->
         Column(
-            modifier = Modifier.padding(inner).fillMaxSize().padding(16.dp),
+            modifier = Modifier
+                .padding(inner)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SectionCard(
@@ -117,14 +136,7 @@ fun SettingsScreen(
                 body = "Empaqueta la base cifrada, tus imágenes (QR/logos) y la clave en un .zip. Tú decides dónde guardarlo (Drive, mensajería, USB). El respaldo incluye la clave para poder restaurarlo: guárdalo en un lugar seguro."
             ) {
                 Button(
-                    onClick = {
-                        val zip = BackupManager.createBackupZip(context)
-                        if (zip != null) {
-                            ShareUtil.shareFile(context, zip, "application/zip", "Respaldo PayBio")
-                        } else {
-                            Toast.makeText(context, "No hay datos para respaldar.", Toast.LENGTH_SHORT).show()
-                        }
-                    },
+                    onClick = { if (prefs.hasPin) showExportPinChoice = true else doExport(false) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Filled.Archive, contentDescription = null)
@@ -144,6 +156,29 @@ fun SettingsScreen(
                 title = "Privacidad",
                 body = "PayBio funciona 100% sin conexión. No se solicita el permiso de Internet. Tus datos nunca salen del dispositivo salvo que tú los compartas."
             ) {}
+
+            SectionCard(
+                title = "Apoya el proyecto ☕",
+                body = "PayBio es gratuito y sin anuncios. Si te sirve, puedes invitarme un café en Ko-fi. Se abre en tu navegador (la app sigue sin acceso a Internet)."
+            ) {
+                Button(
+                    onClick = {
+                        runCatching {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/V7V81LV7GX"))
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            )
+                        }.onFailure {
+                            Toast.makeText(context, "No se pudo abrir el navegador.", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5E5B), contentColor = Color.White),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Favorite, contentDescription = null)
+                    Text("  Apóyame en Ko-fi")
+                }
+            }
         }
     }
 
@@ -184,6 +219,16 @@ fun SettingsScreen(
             title = { Text("Respaldo importado") },
             text = { Text("Reinicia la app para cargar los datos restaurados.") },
             confirmButton = { TextButton(onClick = { restartApp(context) }) { Text("Reiniciar ahora") } }
+        )
+    }
+
+    if (showExportPinChoice) {
+        AlertDialog(
+            onDismissRequest = { showExportPinChoice = false },
+            title = { Text("¿Incluir el PIN del Kiosco?") },
+            text = { Text("Puedes incluir el PIN del Modo Kiosco en el respaldo para recuperarlo al restaurar, o exportar sin él.") },
+            confirmButton = { TextButton(onClick = { showExportPinChoice = false; doExport(true) }) { Text("Con PIN") } },
+            dismissButton = { TextButton(onClick = { showExportPinChoice = false; doExport(false) }) { Text("Sin PIN") } }
         )
     }
 }

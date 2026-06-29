@@ -152,6 +152,36 @@ fun LogoAvatar(method: PaymentMethod, accent: Color, sizeDp: Int) {
     }
 }
 
+/** Larger logo for Kiosk mode: fits the full image (no crop), falls back to the initial. */
+@Composable
+fun KioskLogo(method: PaymentMethod, accent: Color, sizeDp: Int) {
+    val shape = RoundedCornerShape(20.dp)
+    val logo = method.logoImagePath
+    if (logo != null && File(logo).exists()) {
+        AsyncImage(
+            model = File(logo),
+            contentDescription = "Logo",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(sizeDp.dp)
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(sizeDp.dp)
+                .background(accent.copy(alpha = 0.18f), shape)
+                .border(1.dp, accent, shape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = method.displayName.take(1).uppercase(),
+                color = accent,
+                fontWeight = FontWeight.Bold,
+                fontSize = (sizeDp * 0.42f).sp
+            )
+        }
+    }
+}
+
 /** Shows the custom QR image if the user added one, otherwise generates from the account. */
 @Composable
 fun CardQr(method: PaymentMethod, sizeDp: Int = 240, modifier: Modifier = Modifier) {

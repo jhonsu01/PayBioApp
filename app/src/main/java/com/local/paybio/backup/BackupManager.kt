@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.local.paybio.data.PayBioDatabase
 import com.local.paybio.util.DbKey
+import com.local.paybio.util.PrefsManager
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -23,6 +24,7 @@ import java.util.zip.ZipOutputStream
 object BackupManager {
 
     private const val KEY_ENTRY = "paybio.key"
+    private const val PIN_ENTRY = "paybio_pin.txt"
 
     fun qrImagesDir(context: Context): File =
         File(context.filesDir, "qrs").apply { if (!exists()) mkdirs() }
@@ -30,7 +32,7 @@ object BackupManager {
     fun logosDir(context: Context): File =
         File(context.filesDir, "logos").apply { if (!exists()) mkdirs() }
 
-    fun createBackupZip(context: Context): File? {
+    fun createBackupZip(context: Context, includePin: Boolean = false): File? {
         val dbFile = context.getDatabasePath(PayBioDatabase.DB_NAME)
         val backupFile = File(context.cacheDir, "PayBio_Backup_${System.currentTimeMillis()}.zip")
 
@@ -48,6 +50,14 @@ object BackupManager {
                 zipOut.putNextEntry(ZipEntry(KEY_ENTRY))
                 zipOut.write(key.toByteArray(Charsets.UTF_8))
                 zipOut.closeEntry()
+            }
+            // Kiosk PIN — only if the user opted in
+            if (includePin) {
+                PrefsManager(context).kioskPin?.takeIf { it.isNotBlank() }?.let { pin ->
+                    zipOut.putNextEntry(ZipEntry(PIN_ENTRY))
+                    zipOut.write(pin.toByteArray(Charsets.UTF_8))
+                    zipOut.closeEntry()
+                }
             }
             // Saved QR images and logos
             putDir(zipOut, qrImagesDir(context), "qrs")
@@ -92,6 +102,7 @@ object BackupManager {
                         name == "${PayBioDatabase.DB_NAME}-wal" -> File("${dbFile.path}-wal")
                         name == "${PayBioDatabase.DB_NAME}-shm" -> File("${dbFile.path}-shm")
                         name == KEY_ENTRY -> null // handled below
+                        name == PIN_ENTRY -> null // handled below
                         name.startsWith("qrs/") -> File(qrImagesDir(context), name.removePrefix("qrs/"))
                         name.startsWith("logos/") -> File(logosDir(context), name.removePrefix("logos/"))
                         else -> null
@@ -99,6 +110,9 @@ object BackupManager {
                     if (name == KEY_ENTRY) {
                         val key = zin.readBytes().toString(Charsets.UTF_8).trim()
                         if (key.isNotEmpty()) DbKey.set(context, key)
+                    } else if (name == PIN_ENTRY) {
+                        val pin = zin.readBytes().toString(Charsets.UTF_8).trim()
+                        if (pin.isNotEmpty()) PrefsManager(context).kioskPin = pin
                     } else if (target != null && !entry.isDirectory) {
                         target.parentFile?.mkdirs()
                         FileOutputStream(target).use { out -> zin.copyTo(out) }
