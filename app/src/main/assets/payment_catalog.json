@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "countries": [
+    {
+      "name": "Colombia",
+      "methods": [
+        { "platform": "Nequi", "type": "Billetera Virtual", "color": "#DA0081", "pattern": "^3\\d{9}$", "hint": "Celular de 10 dígitos" },
+        { "platform": "Daviplata", "type": "Billetera Virtual", "color": "#ED1C27", "pattern": "^3\\d{9}$", "hint": "Celular de 10 dígitos" },
+        { "platform": "Bancolombia", "type": "Cuenta Bancaria", "color": "#FDDA24", "pattern": "^\\d{10,11}$", "hint": "Número de cuenta" },
+        { "platform": "PSE / Llave", "type": "Transferencia", "color": "#00A859", "pattern": "^.{3,40}$", "hint": "Llave o correo" }
+      ]
+    },
+    {
+      "name": "Perú",
+      "methods": [
+        { "platform": "Yape", "type": "Billetera Virtual", "color": "#7A1FA2", "pattern": "^9\\d{8}$", "hint": "Celular de 9 dígitos" },
+        { "platform": "Plin", "type": "Billetera Virtual", "color": "#0EA5A4", "pattern": "^9\\d{8}$", "hint": "Celular de 9 dígitos" },
+        { "platform": "BCP (CCI)", "type": "Cuenta Bancaria", "color": "#003DA5", "pattern": "^\\d{20}$", "hint": "CCI de 20 dígitos" }
+      ]
+    },
+    {
+      "name": "México",
+      "methods": [
+        { "platform": "CLABE", "type": "Cuenta Bancaria", "color": "#7C3AED", "pattern": "^\\d{18}$", "hint": "CLABE de 18 dígitos" },
+        { "platform": "Mercado Pago", "type": "Billetera Virtual", "color": "#00B1EA", "pattern": "^.{3,40}$", "hint": "Usuario o CVU" }
+      ]
+    },
+    {
+      "name": "Brasil",
+      "methods": [
+        { "platform": "Pix (Chave)", "type": "Billetera Virtual", "color": "#32BCAD", "pattern": "^.{3,77}$", "hint": "CPF, email, teléfono o chave aleatória" }
+      ]
+    },
+    {
+      "name": "Argentina",
+      "methods": [
+        { "platform": "Mercado Pago", "type": "Billetera Virtual", "color": "#00B1EA", "pattern": "^.{3,40}$", "hint": "Alias o CVU" },
+        { "platform": "CBU / CVU", "type": "Cuenta Bancaria", "color": "#74ACDF", "pattern": "^\\d{22}$", "hint": "22 dígitos" }
+      ]
+    },
+    {
+      "name": "Crypto",
+      "methods": [
+        { "platform": "Bitcoin (BTC)", "type": "Blockchain", "color": "#F7931A", "pattern": "^(bc1[a-z0-9]{25,62}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$", "hint": "Dirección BTC (bc1.. / 1.. / 3..)" },
+        { "platform": "Ethereum (ETH)", "type": "Blockchain", "color": "#627EEA", "pattern": "^0x[a-fA-F0-9]{40}$", "hint": "Dirección 0x... (40 hex)" },
+        { "platform": "BNB Smart Chain (BEP20)", "type": "Blockchain", "color": "#F0B90B", "pattern": "^0x[a-fA-F0-9]{40}$", "hint": "Dirección 0x... (40 hex)" },
+        { "platform": "Solana (SOL)", "type": "Blockchain", "color": "#14F195", "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$", "hint": "Dirección base58 (32-44)" },
+        { "platform": "Tron (TRC20 / USDT)", "type": "Blockchain", "color": "#EB0029", "pattern": "^T[1-9A-HJ-NP-Za-km-z]{33}$", "hint": "Dirección T... (34)" }
+      ]
+    }
+  ]
+}

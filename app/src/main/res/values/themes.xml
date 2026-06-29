@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme. Compose drives the real colors (PayBioTheme); this only
+         needs to be a Material-family theme without an action bar. -->
+    <style name="Theme.PayBio" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/paybio_black</item>
+        <item name="android:navigationBarColor">@color/paybio_black</item>
+        <item name="android:windowBackground">@color/paybio_black</item>
+    </style>
+</resources>

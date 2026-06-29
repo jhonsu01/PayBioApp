@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Card body -->
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M30,38 h48 a4,4 0 0 1 4,4 v24 a4,4 0 0 1 -4,4 h-48 a4,4 0 0 1 -4,-4 v-24 a4,4 0 0 1 4,-4 z" />
+    <!-- Magnetic stripe -->
+    <path
+        android:fillColor="#0A0A0A"
+        android:pathData="M26,46 h56 v6 h-56 z" />
+    <!-- QR dot -->
+    <path
+        android:fillColor="#0A0A0A"
+        android:pathData="M62,58 h12 v8 h-12 z" />
+    <!-- Holder line -->
+    <path
+        android:fillColor="#0A0A0A"
+        android:pathData="M32,60 h20 v4 h-20 z" />
+</vector>

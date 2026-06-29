@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="paybio_green">#FF00E676</color>
+    <color name="paybio_black">#FF121212</color>
+    <color name="paybio_surface">#FF1E1E1E</color>
+    <color name="ic_launcher_background">#FF0A0A0A</color>
+</resources>

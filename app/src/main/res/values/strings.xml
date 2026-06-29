@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PayBio</string>
+    <string name="app_tagline">Smart Offline Ledger</string>
+    <string name="widget_description">Acceso rápido a tus tarjetas de cobro favoritas</string>
+    <string name="widget_open">Abrir PayBio</string>
+</resources>
