@@ -64,7 +64,7 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: v${{ steps.ver.outputs.name }}
           name: PayBio v${{ steps.ver.outputs.name }}
           generate_release_notes: true
           files: dist/PayBio-v${{ steps.ver.outputs.name }}.apk
