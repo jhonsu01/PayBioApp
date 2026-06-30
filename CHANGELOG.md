@@ -3,6 +3,11 @@
 Todas las versiones notables de PayBio. El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.1] - 2026-06-29
+
+### Corregido
+- **Compartir cobro:** las tarjetas con **QR personalizado** ahora comparten ese QR (antes compartían siempre el QR generado del número de cuenta). Las tarjetas sin QR personalizado siguen compartiendo el QR generado de la cuenta.
+
 ## [1.7.0] - 2026-06-29
 
 ### Cambiado
@@ -96,6 +101,7 @@ y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Fast-Share** de QR + datos y **widget** de pantalla de inicio.
 - Pipeline de **GitHub Actions**: CI en cada push y publicación automática del APK en Releases por tag `v*`.
 
+[1.7.1]: ../../releases/tag/v1.7.1
 [1.7.0]: ../../releases/tag/v1.7.0
 [1.6.0]: ../../releases/tag/v1.6.0
 [1.5.0]: ../../releases/tag/v1.5.0

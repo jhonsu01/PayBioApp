@@ -3,6 +3,7 @@ package com.local.paybio.util
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.core.content.FileProvider
 import com.local.paybio.data.PaymentMethod
 import java.io.File
@@ -20,8 +21,13 @@ object ShareUtil {
 
     fun sharePaymentMethod(context: Context, method: PaymentMethod) {
         val text = buildText(method)
-        val qrUri = QrGenerator.generate(method.accountNumber)
-            ?.let { saveBitmapToCache(context, it, "qr_share_${method.id}.png") }
+        // Use the user's CUSTOM QR image if the card has one; otherwise generate from the account.
+        val customBmp = method.qrCodeImagePath
+            ?.let { File(it) }
+            ?.takeIf { it.exists() }
+            ?.let { runCatching { BitmapFactory.decodeFile(it.absolutePath) }.getOrNull() }
+        val bmp = customBmp ?: QrGenerator.generate(method.accountNumber)
+        val qrUri = bmp?.let { saveBitmapToCache(context, it, "qr_share_${method.id}.png") }
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             if (qrUri != null) {
