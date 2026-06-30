@@ -2,7 +2,7 @@
 
 # 💸 PayBio — Smart Offline Ledger
 
-**Tarjetero virtual de cobros para Android. 100% local, centrado en la privacidad y potenciado por IA en el dispositivo.**
+**Tarjetero virtual de cobros para Android (y Android TV). 100% local, centrado en la privacidad y potenciado por IA en el dispositivo.**
 
 [![Android CI](../../actions/workflows/android-ci.yml/badge.svg)](../../actions/workflows/android-ci.yml)
 [![Release APK](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
@@ -21,19 +21,23 @@ PayBio guarda tus métodos de cobro (bancos, billeteras virtuales y direcciones 
 
 | Módulo | Descripción |
 | ------ | ----------- |
-| **1. Ingesta Inteligente (IA local)** | Sube una captura de tu app bancaria o pega texto: **ML Kit** (reconocimiento de texto + escaneo de QR) extrae las cadenas y un clasificador por reglas detecta el formato (Ethereum `0x...`, CLABE, Yape, Pix, Nequi, etc.) para crear la tarjeta automáticamente. |
-| **2. Catálogo por País** | `assets/payment_catalog.json` precargado con bancos, billeteras y redes blockchain (BTC, ETH, BSC, Solana, Tron) y sus patrones de validación. |
-| **3. Modo Kiosco** | Para mostradores: bloquea ediciones con un **PIN de 4–6 dígitos**, mantiene la pantalla encendida (anti-reposo) y fija la app en primer plano (`startLockTask`). Salir requiere el PIN. |
-| **4. Respaldo Cero-Nube** | Empaqueta la base de datos **cifrada** y las imágenes QR en un `.zip` y delega al sistema (`ACTION_SEND`) dónde guardarlo. PayBio nunca toca credenciales de nube. |
+| **1. Ingesta Inteligente (IA local)** | Sube una captura de tu app bancaria o pega texto: **ML Kit** (reconocimiento de texto + escaneo de QR) extrae las cadenas y un clasificador por reglas detecta el formato (Ethereum `0x...`, CLABE, Yape, Pix, Nequi, etc.) para crear la tarjeta automáticamente. Puedes buscar la imagen con una app externa o con el **explorador interno**. |
+| **2. Catálogo por País** | `assets/payment_catalog.json` precargado con bancos, billeteras y redes blockchain (BTC, ETH, BSC, Solana, Tron) y sus patrones de validación. Además puedes **crear países y plataformas personalizados** y ponerle un **nombre/alias**, **logo** y **QR propio** a cada tarjeta. |
+| **3. Modo Kiosco** | Para mostradores: bloquea ediciones con un **PIN de 4–6 dígitos**, mantiene la pantalla encendida (anti-reposo) y fija la app en primer plano (`startLockTask`). **Adaptable**: en teléfonos muestra un menú "Medios de pago"; en **TV / pantallas grandes** muestra todas las tarjetas a la vez en una grilla que divide cada recuadro en **info + QR grande** y escala el texto automáticamente. |
+| **4. Respaldo Cero-Nube** | Empaqueta la base **cifrada**, las imágenes (QR/logos), la clave y, opcionalmente, el PIN del kiosco en un `.zip`. **Exporta** compartiéndolo (`ACTION_SEND`) o guardándolo en una carpeta con el explorador interno, e **importa** desde el selector del sistema o el explorador interno. PayBio nunca toca credenciales de nube. |
 
-Extras: **Fast-Share** (compartir QR + datos formateados con un toque) y **widget** de pantalla de inicio para lanzar el cobro al instante.
+Extras: **Fast-Share** (comparte el QR — el personalizado si lo tiene — + datos formateados con un toque), **widget** de pantalla de inicio, **explorador de archivos integrado** (para TV sin gestor de archivos), **realce de foco** para navegar con control remoto y un botón de apoyo en **Ko-fi**.
+
+## 📺 Soporte de Android TV
+
+PayBio funciona en Android TV: navegación con control remoto (D-pad) con realce de foco, Modo Kiosco en grilla que aprovecha la pantalla, y un explorador de archivos integrado para importar/exportar respaldos cuando el dispositivo no trae un gestor de archivos.
 
 ## 🏗️ Stack
 
 - **Kotlin** + **Jetpack Compose** (Material 3, tema oscuro AMOLED obligatorio)
 - **Room** + **SQLCipher** (cifrado en reposo de datos bancarios y cripto)
 - **Google ML Kit** (Text Recognition + Barcode Scanning) — on-device
-- **ZXing** para generación de QR · **java.util.zip** para respaldos
+- **ZXing** (generación de QR) · **Coil** (imágenes) · **java.util.zip** (respaldos)
 - `minSdk 26` · `targetSdk 35` · `compileSdk 35`
 
 ## 📦 Instalar el APK
@@ -54,7 +58,7 @@ Requisitos: JDK 17 y Android SDK (platform 35, build-tools 35.0.0).
 ./gradlew :app:assembleDebug
 
 # APK de release (instalable)
-./gradlew :app:assembleRelease -PappVersionName=1.0.0 -PappVersionCode=1
+./gradlew :app:assembleRelease -PappVersionName=1.7.1 -PappVersionCode=1
 ```
 
 El APK queda en `app/build/outputs/apk/`.
@@ -67,13 +71,15 @@ El APK queda en `app/build/outputs/apk/`.
 
 ```bash
 # Publicar una nueva versión
-git tag v1.0.0
-git push origin v1.0.0   # -> Actions construye el APK y crea la Release
+git tag v1.7.1
+git push origin v1.7.1   # -> Actions construye el APK y crea la Release
 ```
 
 ## 🔒 Privacidad
 
 Sin permiso de Internet · sin analítica · sin cuentas · sin servidores. Todo vive cifrado en tu dispositivo y solo sale de él si **tú** decides compartirlo.
+
+El único permiso adicional es **opcional**: acceso a almacenamiento para el **explorador de archivos integrado** (importar/exportar respaldos en dispositivos sin gestor de archivos, como algunas TV). No se usa a menos que abras ese explorador.
 
 ## 📄 Licencia
 
