@@ -46,11 +46,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.local.paybio.data.PaymentMethod
 import com.local.paybio.ui.PaymentViewModel
 import com.local.paybio.ui.components.CardQr
@@ -201,18 +203,20 @@ private fun KioskTileFit(method: PaymentMethod) {
         shape = RoundedCornerShape(20.dp)
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
+            // Text/logo shrink on smaller cells (e.g. 6+ tiles) so info stays readable.
+            val s = (maxWidth.value / 460f).coerceIn(0.58f, 1.08f)
             if (maxWidth >= maxHeight) {
                 // Wide cell -> info | QR
-                Row(Modifier.fillMaxSize().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxSize().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(
                         modifier = Modifier.weight(0.42f),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        KioskLogo(method, accent, 56)
-                        Spacer(Modifier.height(8.dp))
-                        TileTexts(method, accent)
+                        KioskLogo(method, accent, (54 * s).toInt())
+                        Spacer(Modifier.height((8 * s).dp))
+                        TileTexts(method, accent, s)
                     }
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(10.dp))
                     Box(Modifier.weight(0.58f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                         BoxWithConstraints(contentAlignment = Alignment.Center) {
                             val q = (minOf(maxWidth, maxHeight).value - 8f).toInt().coerceIn(60, 460)
@@ -223,16 +227,16 @@ private fun KioskTileFit(method: PaymentMethod) {
             } else {
                 // Tall cell -> stacked, QR fills the remaining space
                 Column(Modifier.fillMaxSize().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    KioskLogo(method, accent, 46)
+                    KioskLogo(method, accent, (44 * s).toInt())
                     Spacer(Modifier.height(4.dp))
                     Text(
                         method.displayName,
-                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold, fontSize = (18 * s).sp,
                         color = accent, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
                     )
                     Text(
                         "${method.country} · ${method.type}",
-                        style = MaterialTheme.typography.bodyLarge,
+                        fontSize = (12.5f * s).sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis
                     )
                     Box(
@@ -246,11 +250,12 @@ private fun KioskTileFit(method: PaymentMethod) {
                     }
                     Text(
                         method.holderName,
+                        fontSize = (15 * s).sp,
                         color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
                     )
                     Text(
                         method.accountNumber,
-                        fontFamily = FontFamily.Monospace, color = accent, maxLines = 1,
+                        fontFamily = FontFamily.Monospace, fontSize = (14 * s).sp, color = accent, maxLines = 1,
                         overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -260,26 +265,26 @@ private fun KioskTileFit(method: PaymentMethod) {
 }
 
 @Composable
-private fun TileTexts(method: PaymentMethod, accent: androidx.compose.ui.graphics.Color) {
+private fun TileTexts(method: PaymentMethod, accent: androidx.compose.ui.graphics.Color, scale: Float) {
     Text(
         method.displayName,
-        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold, fontSize = (18 * scale).sp, lineHeight = (20 * scale).sp,
         color = accent, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
     )
     Text(
         "${method.country} · ${method.type}",
-        style = MaterialTheme.typography.bodyLarge,
+        fontSize = (12.5f * scale).sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
     )
-    Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height((8 * scale).dp))
     Text(
         method.holderName,
-        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.SemiBold, fontSize = (15 * scale).sp,
         color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center
     )
     Text(
         method.accountNumber,
-        fontFamily = FontFamily.Monospace, color = accent, maxLines = 1,
+        fontFamily = FontFamily.Monospace, fontSize = (14 * scale).sp, color = accent, maxLines = 1,
         overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
     )
 }

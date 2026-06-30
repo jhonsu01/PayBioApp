@@ -22,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +30,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -44,6 +47,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.local.paybio.data.PaymentMethod
 import com.local.paybio.ingest.IngestSuggestion
 import com.local.paybio.ui.IngestUiState
@@ -67,6 +72,8 @@ fun IngestScreen(
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { viewModel.ingestFromImage(it) }
     }
+    var showImgChoice by remember { mutableStateOf(false) }
+    var showImgBrowser by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -101,7 +108,7 @@ fun IngestScreen(
             )
 
             Button(
-                onClick = { picker.launch("image/*") },
+                onClick = { showImgChoice = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Filled.Image, contentDescription = null)
@@ -172,6 +179,36 @@ fun IngestScreen(
                 }
 
                 else -> {}
+            }
+        }
+    }
+
+    if (showImgChoice) {
+        AlertDialog(
+            onDismissRequest = { showImgChoice = false },
+            title = { Text("Elegir imagen") },
+            text = { Text("Busca la captura con una app de galería/archivos, o usa el explorador interno (útil en TV).") },
+            confirmButton = {
+                TextButton(onClick = { showImgChoice = false; picker.launch("image/*") }) { Text("App externa") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImgChoice = false; showImgBrowser = true }) { Text("Explorador interno") }
+            }
+        )
+    }
+
+    if (showImgBrowser) {
+        Dialog(
+            onDismissRequest = { showImgBrowser = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = true)
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                FileBrowserScreen(
+                    title = "Buscar captura",
+                    extensions = listOf("jpg", "jpeg", "png", "webp", "gif", "bmp"),
+                    onPick = { file -> showImgBrowser = false; viewModel.ingestFromImage(android.net.Uri.fromFile(file)) },
+                    onClose = { showImgBrowser = false }
+                )
             }
         }
     }

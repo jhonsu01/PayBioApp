@@ -7,7 +7,7 @@ plugins {
 
 // Versioning driven by SemVer git tags via -PappVersionName / -PappVersionCode (CI).
 // Falls back to sane defaults for local builds.
-val appVersionName: String = (project.findProperty("appVersionName") as String?) ?: "1.6.0"
+val appVersionName: String = (project.findProperty("appVersionName") as String?) ?: "1.7.0"
 val appVersionCode: Int = ((project.findProperty("appVersionCode") as String?) ?: "1").toInt()
 
 android {

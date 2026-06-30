@@ -1,6 +1,9 @@
 package com.local.paybio.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusRestorer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +39,7 @@ import com.local.paybio.R
 import com.local.paybio.ui.PaymentViewModel
 import com.local.paybio.ui.components.PaymentCard
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     viewModel: PaymentViewModel,
@@ -94,7 +97,7 @@ fun HomeScreen(
             EmptyState(Modifier.padding(inner).fillMaxSize(), onIngest)
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().focusRestorer().focusGroup(),
                 contentPadding = PaddingValues(16.dp, inner.calculateTopPadding(), 16.dp, 96.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {

@@ -3,6 +3,17 @@
 Todas las versiones notables de PayBio. El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.0] - 2026-06-29
+
+### Cambiado
+- **Modo Kiosco (TV):** el texto e ícono de cada recuadro **se reducen automáticamente** cuando hay más tarjetas (p. ej. 6) para que el nombre, titular y cuenta se vean completos sin recortes.
+
+### Añadido
+- **Ingesta inteligente:** el botón "Elegir captura" ahora ofrece "App externa" o "**Explorador interno**" para buscar la imagen (útil en TV sin galería).
+
+### Corregido
+- **Navegación con control remoto en el inicio:** al volver desde el final de la lista, el foco vuelve a la lista de tarjetas (antes saltaba al botón de IA y no regresaba). Se usa `focusRestorer` + `focusGroup`.
+
 ## [1.6.0] - 2026-06-29
 
 ### Cambiado
@@ -85,6 +96,7 @@ y el proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Fast-Share** de QR + datos y **widget** de pantalla de inicio.
 - Pipeline de **GitHub Actions**: CI en cada push y publicación automática del APK en Releases por tag `v*`.
 
+[1.7.0]: ../../releases/tag/v1.7.0
 [1.6.0]: ../../releases/tag/v1.6.0
 [1.5.0]: ../../releases/tag/v1.5.0
 [1.4.0]: ../../releases/tag/v1.4.0
