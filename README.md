@@ -81,6 +81,12 @@ Sin permiso de Internet · sin analítica · sin cuentas · sin servidores. Todo
 
 El único permiso adicional es **opcional**: acceso a almacenamiento para el **explorador de archivos integrado** (importar/exportar respaldos en dispositivos sin gestor de archivos, como algunas TV). No se usa a menos que abras ese explorador.
 
+## ☕ Apóyame
+
+PayBio es gratuito y de código abierto. Si te resulta útil, puedes apoyar el proyecto o hacer una donación:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V81LV7GX)
+
 ## 📄 Licencia
 
 [MIT](LICENSE)
