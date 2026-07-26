@@ -2,6 +2,15 @@
 
 # 💸 PayBio — Smart Offline Ledger
 
+<div align="center">
+  <img src="./assets/banner.png" alt="PayBioApp Banner" width="100%" />
+
+  # PayBioApp 💳🔒
+
+  **Tarjetero virtual de cobros para Android (Móvil, TV y Modo Kiosko)**  
+  *100% local, centrado en la privacidad y potenciado por IA en el dispositivo.*
+</div>
+
 **Tarjetero virtual de cobros para Android (y Android TV). 100% local, centrado en la privacidad y potenciado por IA en el dispositivo.**
 
 [![Android CI](../../actions/workflows/android-ci.yml/badge.svg)](../../actions/workflows/android-ci.yml)
